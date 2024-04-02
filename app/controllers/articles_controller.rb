@@ -1,48 +1,81 @@
 class ArticlesController < ApplicationController
-  before_action :set_article, only: [:show, :edit, :update, :destroy]
+  before_action :set_article, only: [:show, :update, :destroy]
 
   def index
-    @articles = Article.all
+    @articles = Article.where(status: "public").
+                or(Article.where(status: "private").and(Article.where(user: @current_user)))
+    render json: @articles
   end
 
-  def show; end
+  def get_archived
+    @articles = Article.where(user: @current_user).where(status: 'archived')
+    render json: @articles
+  end
 
-  def new
-    @article = Article.new
+  def show
+    if(@article.status == 'archived')
+      return render json: {
+        message: "This article is archived."
+      },
+      status: :bad_request
+    end
+
+    if(@article.status == 'private' && @article.user != @current_user)
+      return render json: {
+        message: "This article is private, only the owner of the article can access it."
+      },
+      status: :unauthorized
+    end
+
+    render json: @article
   end
 
   def create
     @article = Article.new(article_params)
+    @article.user = @current_user
 
     if @article.save
-      redirect_to article_path(@article)
+      render json: @article, status: :created
     else
-      render :new, status: :unprocessable_entity
+      render json: @article.errors, status: :unprocessable_entity
     end
   end
 
-  def edit; end
-
   def update
+    if(@article.user != @current_user)
+      return render json: {
+        message: "This article is private, only the owner of the article can access it."
+      },
+      status: :unauthorized
+    end
+
     if @article.update(article_params)
-      redirect_to article_path(@article)
+      render json: @article
     else
-      render :edit, status: :unprocessable_entity
+      render json: @article.errors, status: :unprocessable_entity
     end
   end
 
   def destroy
-    @article.destroy
+    if(@article.user != @current_user)
+      return render json: {
+        message: "This article is private, only the owner of the article can access it."
+      },
+      status: :unauthorized
+    end
 
-    redirect_to articles_path, status: :see_other
+    @article.destroy
+    head :no_content
   end
 
   private
+
   def article_params
     params.require(:article).permit(:title, :body, :status)
   end
 
   def set_article
     @article = @article || Article.find(params[:id])
+    # check it (why || ?)
   end
 end
