@@ -7,7 +7,8 @@ class AuthenticationController < ApplicationController
       token = JsonWebToken.encode(user_id: @user.id)
       time = Time.now + 24.hours.to_i
       render json:  {
-                      message: "User logged in successfully",
+                      message: "User registered successfully",
+                      user: {id: @user.id, email: @user.email, name: @user.name},
                       token: token,
                       valid_till: time.strftime("%m-%d-%Y %H:%M"),
                     },
@@ -24,6 +25,7 @@ class AuthenticationController < ApplicationController
       time = Time.now + 24.hours.to_i
       render json:  {
                       message: "User logged in successfully",
+                      user: {id: @user.id, email: @user.email, name: @user.name},
                       token: token,
                       valid_till: time.strftime("%m-%d-%Y %H:%M"),
                     },

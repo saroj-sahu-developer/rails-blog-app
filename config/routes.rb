@@ -3,10 +3,11 @@ Rails.application.routes.draw do
   root "articles#index"
 
   resources :articles do
-    resources :comments
     collection do
       get "get_archived"
+      get "current_users_articles"
     end
+    resources :comments
   end
 
   post '/user/register', to: 'authentication#register'

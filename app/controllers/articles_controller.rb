@@ -12,6 +12,11 @@ class ArticlesController < ApplicationController
     render json: @articles
   end
 
+  def current_users_articles
+    @articles = Article.where(user: @current_user).where.not(status: 'archived')
+    render json: @articles
+  end
+
   def show
     if(@article.status == 'archived')
       return render json: {
